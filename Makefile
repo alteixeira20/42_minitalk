@@ -6,7 +6,7 @@
 #    By: paalexan <paalexan@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/04 16:36:58 by paalexan          #+#    #+#              #
-#    Updated: 2025/03/05 19:12:13 by paalexan         ###   ########.fr        #
+#    Updated: 2025/03/08 18:51:43 by paalexan         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,10 +17,7 @@ CFLAGS				:= -Wall -Werror -Wextra -g
 VFLAGS				:= --leak-check=full --show-leak-kinds=all --track-origins=yes
 
 # Directories
-SRC_SERVER_DIR		:= src/server
-SRC_CLIENT_DIR		:= src/client
-SRC_UTILS_DIR		:= src/utils
-SRC_TESTER_DIR		:= src/tester
+SRC_DIR				:= src
 OBJ_DIR				:= obj
 RESULTS_DIR			:= results
 
@@ -30,13 +27,11 @@ LIBFT_DIR			:= libft
 LIBFT				:= $(LIBFT_DIR)/libft.a
 
 # Source Files
-SRC_SERVER			:= $(SRC_SERVER_DIR)/server.c
-SRC_CLIENT			:= $(SRC_CLIENT_DIR)/client.c
-SRC_UTILS			:= $(SRC_UTILS_DIR)/utils_bits.c $(SRC_UTILS_DIR)/utils_lists.c
+SRC_SERVER			:= $(SRC_DIR)/server.c
+SRC_CLIENT			:= $(SRC_DIR)/client.c
 
-OBJ_SERVER			:= $(patsubst $(SRC_SERVER_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_SERVER))
-OBJ_CLIENT			:= $(patsubst $(SRC_CLIENT_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_CLIENT))
-OBJ_UTILS			:= $(patsubst $(SRC_UTILS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_UTILS))
+OBJ_SERVER			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_SERVER))
+OBJ_CLIENT			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_CLIENT))
 
 # Executables
 SERVER				:= server
@@ -45,16 +40,9 @@ CLIENT				:= client
 # Tester
 GET_PID_CMD			:= $(shell pgrep -f server)
 TEST_FILE			:= test_cases.txt
+
 # Targets
-$(OBJ_DIR)/%.o: $(SRC_SERVER_DIR)/%.c
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/%.o: $(SRC_CLIENT_DIR)/%.c
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/%.o: $(SRC_UTILS_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
@@ -128,9 +116,9 @@ tester: $(SERVER) $(CLIENT)
 		echo "$(ORANGE)$(PREFIX)$(RESET) Test ID: $$test_id | Length: $$test_length"; \
 		echo "$(GREY)$$test_msg"; \
 		./$(CLIENT) $$SERVER_PID "$$test_msg"; \
-		sleep 1; \
+		sleep 2; \
 	done
-	@sleep 1
+	@sleep 2
 	@sync
 	@echo "$(ORANGE)$(PREFIX)$(RESET) Comparing diferences between $(ORANGE)test_cases.txt$(RESET) and $(ORANGE)server.out$(RESET)..."
 	@tail -n +2 $(RESULTS_DIR)/server.out | diff -u $(TEST_FILE) - > $(RESULTS_DIR)/diff.log; \
@@ -141,22 +129,14 @@ tester: $(SERVER) $(CLIENT)
 	fi; \
 	$(MAKE) stop_server --silent
 
-valgrind_test:
-	@mkdir -p $(RESULTS_DIR)
-	@echo "$(ORANGE)$(PREFIX)$(RESET) Running server under Valgrind..."
-	@valgrind $(VFLAGS) ./$(SERVER) > $(RESULTS_DIR)/valgrind.out 2>&1 &
-	@sleep 2
-	@cat $(RESULTS_DIR)/valgrind.out | grep "definitely lost" || echo "$(GREEN)✅ No memory leaks detected!"
-
-
 clean:
 	@rm -rf $(OBJ_DIR) $(RESULTS_DIR)
 	@rm -f $(SERVER) $(CLIENT)
-	@echo "$(ORANGE)$(PREFIX)$(RESET) All executables and objects were cleaned $(GREEN)succefully$(RESET)."
+	@echo "$(ORANGE)$(PREFIX)$(RESET) All executables and objects were cleaned $(GREEN)successfully$(RESET)."
 
 fclean: clean stop_server
 	@rm -rf $(LIBFT_DIR)
-	@echo "$(ORANGE)$(PREFIX)$(RESET) Libft was cleaned $(GREEN)succefully$(RESET)."
+	@echo "$(ORANGE)$(PREFIX)$(RESET) Libft was cleaned $(GREEN)successfully$(RESET)."
 
 re: fclean all
 
