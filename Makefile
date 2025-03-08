@@ -6,7 +6,7 @@
 #    By: paalexan <paalexan@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/04 16:36:58 by paalexan          #+#    #+#              #
-#    Updated: 2025/03/08 18:51:43 by paalexan         ###   ########.fr        #
+#    Updated: 2025/03/08 20:12:47 by paalexan         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,6 +18,7 @@ VFLAGS				:= --leak-check=full --show-leak-kinds=all --track-origins=yes
 
 # Directories
 SRC_DIR				:= src
+SRC_BONUS_DIR		:= srcb
 OBJ_DIR				:= obj
 RESULTS_DIR			:= results
 
@@ -33,6 +34,13 @@ SRC_CLIENT			:= $(SRC_DIR)/client.c
 OBJ_SERVER			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_SERVER))
 OBJ_CLIENT			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_CLIENT))
 
+# Bonus Source Files
+SRC_BONUS_SERVER			:= $(SRC_BONUS_DIR)/server_bonus.c
+SRC_BONUS_CLIENT			:= $(SRC_BONUS_DIR)/client_bonus.c
+
+OBJ_BONUS_SERVER			:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_SERVER))
+OBJ_BONUS_CLIENT			:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_CLIENT))
+
 # Executables
 SERVER				:= server
 CLIENT				:= client
@@ -40,14 +48,25 @@ CLIENT				:= client
 # Tester
 GET_PID_CMD			:= $(shell pgrep -f server)
 TEST_FILE			:= test_cases.txt
+BONUS_TEST_FILE		:= test_cases_bonus.txt
+TEMP_TEST_FILE		:= $(RESULTS_DIR)/test_cases_combined.txt
 
 # Targets
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+$(OBJ_DIR)/%.o: $(SRC_BONUS_DIR)/%.c
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
 # Rules
 all: $(LIBFT) $(SERVER) $(CLIENT)
+
+bonus: $(LIBFT) $(OBJ_BONUS_SERVER) $(OBJ_BONUS_CLIENT)
+	@$(CC) $(CFLAGS) $(OBJ_BONUS_SERVER) $(LIBFT) -o $(SERVER)
+	@$(CC) $(CFLAGS) $(OBJ_BONUS_CLIENT) $(LIBFT) -o $(CLIENT)
+	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Bonus$(RESET) compiled $(GREEN)successfully$(RESET)."
 
 $(LIBFT):
 	@if [ ! -d "$(LIBFT_DIR)" ]; then \
@@ -57,12 +76,12 @@ $(LIBFT):
 	@$(MAKE) -C $(LIBFT_DIR) --silent > /dev/null 2>&1
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Libft$(RESET) compiled $(GREEN)successfully$(RESET)."
 
-$(SERVER): $(OBJ_SERVER) $(OBJ_UTILS)
-	@$(CC) $(CFLAGS) $(OBJ_SERVER) $(OBJ_UTILS) $(LIBFT) -o $(SERVER)
+$(SERVER): $(OBJ_SERVER)
+	@$(CC) $(CFLAGS) $(OBJ_SERVER) $(LIBFT) -o $(SERVER)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Server$(RESET) compiled $(GREEN)successfully$(RESET)."
 
-$(CLIENT): $(OBJ_CLIENT) $(OBJ_UTILS)
-	@$(CC) $(CFLAGS) $(OBJ_CLIENT) $(OBJ_UTILS) $(LIBFT) -o $(CLIENT)
+$(CLIENT): $(OBJ_CLIENT)
+	@$(CC) $(CFLAGS) $(OBJ_CLIENT) $(LIBFT) -o $(CLIENT)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Client$(RESET) compiled $(GREEN)successfully$(RESET)."
 
 # Testing Rules
@@ -71,6 +90,8 @@ start_server:
 	@touch $(RESULTS_DIR)/server.out
 	@echo "$(ORANGE)$(PREFIX)$(RESET) Starting server and logging to $(ORANGE)$(RESULTS_DIR)/server.out$(RESET)."
 	@stdbuf -oL ./$(SERVER) > $(RESULTS_DIR)/server.out 2>&1 & echo $$! > $(RESULTS_DIR)/server.pid
+	@echo "$(ORANGE)$(PREFIX)$(RESET) Opening terminal to showcase the content of $(ORANGE)server.out$(RESET)." 
+	@x-terminal-emulator -e "tail -f results/server.out" &
 	@sleep 1
 	@while [ ! -s "$(RESULTS_DIR)/server.out" ]; do \
 		echo "$(ORANGE)$(PREFIX)$(RESET) Waiting for server to start..."; \
@@ -94,34 +115,59 @@ stop_server:
 	fi
 
 tester: $(SERVER) $(CLIENT)
+	@if [ ! -f "test_cases.txt" ] || [ ! -f "test_cases_bonus.txt" ]; then \
+		echo "$(ORANGE)$(PREFIX)$(RESET) Copying test cases from $(ORANGE)libft/minitalk/$(RESET)..."; \
+		cp libft/minitalk/test_cases.txt . || echo "$(ORANGE)$(PREFIX)$(RESET) Copy test_cases.txt $(RED)FAILED$(RESET)!"; \
+		cp libft/minitalk/test_cases_bonus.txt . || echo "$(ORANGE)$(PREFIX)$(RESET) Copy test_cases_bonus.txt $(RED)FAILED$(RESET)!"; \
+	fi
 
 	@if [ ! -f "$(TEST_FILE)" ]; then \
 		echo "$(ORANGE)$(PREFIX)$(RESET) File $(RED)$(TEST_FILE)$(RESET) is missing!"; \
 		exit 1; \
 	fi
+
 	@if [ -f "$(RESULTS_DIR)/server.pid" ]; then \
 		PID=$$(cat $(RESULTS_DIR)/server.pid); \
 		if ps -p $$PID > /dev/null 2>&1; then \
 			echo "$(ORANGE)$(PREFIX)$(RESET) Server is already running on process $(ORANGE)$$PID$(RESET)."; \
 			$(MAKE) stop_server --silent; \
+			sleep 0.5; \
+			$(MAKE) start_server --silent; \
+		else \
 			$(MAKE) start_server --silent; \
 		fi; \
 	else \
 		$(MAKE) start_server --silent; \
 	fi
-	@sleep 1
-	@echo "$(ORANGE)$(PREFIX)$(RESET) Running tests from $(ORANGE)$(TEST_FILE)$(RESET)..."
-	@awk '{print NR, length($$0), $$0}' $(TEST_FILE) | while read -r test_id test_length test_msg; do \
+
+	@cp $(TEST_FILE) $(TEMP_TEST_FILE)
+
+	@if [ -f "$(BONUS_TEST_FILE)" ]; then \
+		echo "$(ORANGE)$(PREFIX)$(RESET) Do you want to include Bonus Test Cases? (y/n)"; \
+		read answer; \
+		if [ "$$answer" = "y" ] || [ "$$answer" = "Y" ]; then \
+			cat $(BONUS_TEST_FILE) >> $(TEMP_TEST_FILE); \
+			echo "$(ORANGE)$(PREFIX)$(RESET) Bonus test cases $(GREEN)added$(RESET)."; \
+		else \
+			echo "$(ORANGE)$(PREFIX)$(RESET) Running without Bonus test cases."; \
+		fi; \
+	fi
+
+	@sleep 0.5
+	@echo "$(ORANGE)$(PREFIX)$(RESET) Running tests from $(ORANGE)$(TEMP_TEST_FILE)$(RESET)..."
+	@awk '{print NR, length($$0), $$0}' $(TEMP_TEST_FILE) | while read -r test_id test_length test_msg; do \
 		SERVER_PID=$$(cat $(RESULTS_DIR)/server.pid); \
 		echo "$(ORANGE)$(PREFIX)$(RESET) Test ID: $$test_id | Length: $$test_length"; \
 		echo "$(GREY)$$test_msg"; \
 		./$(CLIENT) $$SERVER_PID "$$test_msg"; \
 		sleep 2; \
 	done
+
 	@sleep 2
 	@sync
-	@echo "$(ORANGE)$(PREFIX)$(RESET) Comparing diferences between $(ORANGE)test_cases.txt$(RESET) and $(ORANGE)server.out$(RESET)..."
-	@tail -n +2 $(RESULTS_DIR)/server.out | diff -u $(TEST_FILE) - > $(RESULTS_DIR)/diff.log; \
+	@echo "$(ORANGE)$(PREFIX)$(RESET) Comparing differences between $(ORANGE)test_cases.txt$(RESET) and $(ORANGE)server.out$(RESET)..."
+
+	@tail -n +2 $(RESULTS_DIR)/server.out | diff -u $(TEMP_TEST_FILE) - > $(RESULTS_DIR)/diff.log; \
 	if [ $$? -eq 0 ]; then \
 		echo "$(ORANGE)$(PREFIX)$(RESET) All Tests $(GREEN)PASSED$(RESET) congratulations!"; \
 	else \
@@ -131,6 +177,7 @@ tester: $(SERVER) $(CLIENT)
 
 clean:
 	@rm -rf $(OBJ_DIR) $(RESULTS_DIR)
+	@rm -f $(TEST_FILE) $(BONUS_TEST_FILE) $(TEMP_TEST_FILE)
 	@rm -f $(SERVER) $(CLIENT)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) All executables and objects were cleaned $(GREEN)successfully$(RESET)."
 
@@ -150,4 +197,4 @@ RESET	:= $(shell tput sgr0)
 GREY	:= $(shell tput setaf 8)
 ORANGE	:= $(shell tput setaf 214)
 
-.PHONY: all clean fclean re tester start_server stop_server valgrind_test
+.PHONY: all clean fclean re tester start_server stop_server bonus
