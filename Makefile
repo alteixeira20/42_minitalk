@@ -6,7 +6,7 @@
 #    By: paalexan <paalexan@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/04 16:36:58 by paalexan          #+#    #+#              #
-#    Updated: 2025/03/08 20:12:47 by paalexan         ###   ########.fr        #
+#    Updated: 2025/03/12 16:03:23 by paalexan         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -76,11 +76,11 @@ $(LIBFT):
 	@$(MAKE) -C $(LIBFT_DIR) --silent > /dev/null 2>&1
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Libft$(RESET) compiled $(GREEN)successfully$(RESET)."
 
-$(SERVER): $(OBJ_SERVER)
+$(SERVER): $(LIBFT) $(OBJ_SERVER)
 	@$(CC) $(CFLAGS) $(OBJ_SERVER) $(LIBFT) -o $(SERVER)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Server$(RESET) compiled $(GREEN)successfully$(RESET)."
 
-$(CLIENT): $(OBJ_CLIENT)
+$(CLIENT): $(LIBFT) $(OBJ_CLIENT)
 	@$(CC) $(CFLAGS) $(OBJ_CLIENT) $(LIBFT) -o $(CLIENT)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) $(BOLD)Client$(RESET) compiled $(GREEN)successfully$(RESET)."
 
