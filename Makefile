@@ -12,43 +12,43 @@
 
 
 # Compiler & Flags
-CC					:= cc
-CFLAGS				:= -Wall -Werror -Wextra -g
-VFLAGS				:= --leak-check=full --show-leak-kinds=all --track-origins=yes
+CC			:= cc
+CFLAGS			:= -Wall -Werror -Wextra -g
+VFLAGS			:= --leak-check=full --show-leak-kinds=all --track-origins=yes
 
 # Directories
-SRC_DIR				:= src
+SRC_DIR			:= src
 SRC_BONUS_DIR		:= srcb
-OBJ_DIR				:= obj
-RESULTS_DIR			:= results
+OBJ_DIR			:= obj
+RESULTS_DIR		:= results
 
 # Libft
-LIBFT_REPO			:= https://github.com/alteixeira20/42_libft.git
-LIBFT_DIR			:= libft
-LIBFT				:= $(LIBFT_DIR)/libft.a
+LIBFT_REPO		:= https://github.com/alteixeira20/42_libft.git
+LIBFT_DIR		:= libft
+LIBFT			:= $(LIBFT_DIR)/libft.a
 
 # Source Files
-SRC_SERVER			:= $(SRC_DIR)/server.c
-SRC_CLIENT			:= $(SRC_DIR)/client.c
+SRC_SERVER		:= $(SRC_DIR)/server.c
+SRC_CLIENT		:= $(SRC_DIR)/client.c
 
-OBJ_SERVER			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_SERVER))
-OBJ_CLIENT			:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_CLIENT))
+OBJ_SERVER		:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_SERVER))
+OBJ_CLIENT		:= $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_CLIENT))
 
 # Bonus Source Files
-SRC_BONUS_SERVER			:= $(SRC_BONUS_DIR)/server_bonus.c
-SRC_BONUS_CLIENT			:= $(SRC_BONUS_DIR)/client_bonus.c
+SRC_BONUS_SERVER	:= $(SRC_BONUS_DIR)/server_bonus.c
+SRC_BONUS_CLIENT	:= $(SRC_BONUS_DIR)/client_bonus.c
 
-OBJ_BONUS_SERVER			:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_SERVER))
-OBJ_BONUS_CLIENT			:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_CLIENT))
+OBJ_BONUS_SERVER	:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_SERVER))
+OBJ_BONUS_CLIENT	:= $(patsubst $(SRC_BONUS_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_BONUS_CLIENT))
 
 # Executables
-SERVER				:= server
-CLIENT				:= client
+SERVER			:= server
+CLIENT			:= client
 
 # Tester
-GET_PID_CMD			:= $(shell pgrep -f server)
-TEST_FILE			:= test_cases.txt
-BONUS_TEST_FILE		:= test_cases_bonus.txt
+GET_PID_CMD		:= $(shell pgrep -f server)
+TEST_FILE		:= test-cases/test_cases.txt
+BONUS_TEST_FILE		:= test-cases/test_cases_bonus.txt
 TEMP_TEST_FILE		:= $(RESULTS_DIR)/test_cases_combined.txt
 
 # Targets
@@ -115,12 +115,6 @@ stop_server:
 	fi
 
 tester: $(SERVER) $(CLIENT)
-	@if [ ! -f "test_cases.txt" ] || [ ! -f "test_cases_bonus.txt" ]; then \
-		echo "$(ORANGE)$(PREFIX)$(RESET) Copying test cases from $(ORANGE)libft/minitalk/$(RESET)..."; \
-		cp libft/minitalk/test_cases.txt . || echo "$(ORANGE)$(PREFIX)$(RESET) Copy test_cases.txt $(RED)FAILED$(RESET)!"; \
-		cp libft/minitalk/test_cases_bonus.txt . || echo "$(ORANGE)$(PREFIX)$(RESET) Copy test_cases_bonus.txt $(RED)FAILED$(RESET)!"; \
-	fi
-
 	@if [ ! -f "$(TEST_FILE)" ]; then \
 		echo "$(ORANGE)$(PREFIX)$(RESET) File $(RED)$(TEST_FILE)$(RESET) is missing!"; \
 		exit 1; \
@@ -177,7 +171,7 @@ tester: $(SERVER) $(CLIENT)
 
 clean:
 	@rm -rf $(OBJ_DIR) $(RESULTS_DIR)
-	@rm -f $(TEST_FILE) $(BONUS_TEST_FILE) $(TEMP_TEST_FILE)
+	@rm -f $(TEMP_TEST_FILE)
 	@rm -f $(SERVER) $(CLIENT)
 	@echo "$(ORANGE)$(PREFIX)$(RESET) All executables and objects were cleaned $(GREEN)successfully$(RESET)."
 
