@@ -47,8 +47,8 @@ CLIENT			:= client
 
 # Tester
 GET_PID_CMD		:= $(shell pgrep -f server)
-TEST_FILE		:= test-cases/test_cases.txt
-BONUS_TEST_FILE		:= test-cases/test_cases_bonus.txt
+TEST_FILE		:= tester/test_cases.txt
+BONUS_TEST_FILE		:= tester/test_cases_bonus.txt
 TEMP_TEST_FILE		:= $(RESULTS_DIR)/test_cases_combined.txt
 
 # Targets
@@ -86,7 +86,6 @@ $(CLIENT): $(LIBFT) $(OBJ_CLIENT)
 
 # Testing Rules
 start_server:
-	@mkdir -p $(RESULTS_DIR)
 	@touch $(RESULTS_DIR)/server.out
 	@echo "$(ORANGE)$(PREFIX)$(RESET) Starting server and logging to $(ORANGE)$(RESULTS_DIR)/server.out$(RESET)."
 	@stdbuf -oL ./$(SERVER) > $(RESULTS_DIR)/server.out 2>&1 & echo $$! > $(RESULTS_DIR)/server.pid
@@ -115,11 +114,24 @@ stop_server:
 	fi
 
 tester: $(SERVER) $(CLIENT)
+	@if [ -d "$(RESULTS_DIR)" ]; then \
+		rm -rf $(RESULTS_DIR); \
+	fi
 	@if [ ! -f "$(TEST_FILE)" ]; then \
 		echo "$(ORANGE)$(PREFIX)$(RESET) File $(RED)$(TEST_FILE)$(RESET) is missing!"; \
 		exit 1; \
 	fi
-
+	@mkdir -p $(RESULTS_DIR)
+	@if [ -f "$(BONUS_TEST_FILE)" ]; then \
+		echo "$(ORANGE)$(PREFIX)$(RESET) Do you want to include Bonus Test Cases? (y/n)"; \
+		read answer; \
+		if [ "$$answer" = "y" ] || [ "$$answer" = "Y" ]; then \
+			cat $(BONUS_TEST_FILE) >> $(TEMP_TEST_FILE); \
+			echo "$(ORANGE)$(PREFIX)$(RESET) Bonus test cases $(GREEN)added$(RESET)."; \
+		else \
+			echo "$(ORANGE)$(PREFIX)$(RESET) Running without Bonus test cases."; \
+		fi; \
+	fi
 	@if [ -f "$(RESULTS_DIR)/server.pid" ]; then \
 		PID=$$(cat $(RESULTS_DIR)/server.pid); \
 		if ps -p $$PID > /dev/null 2>&1; then \
@@ -135,17 +147,6 @@ tester: $(SERVER) $(CLIENT)
 	fi
 
 	@cp $(TEST_FILE) $(TEMP_TEST_FILE)
-
-	@if [ -f "$(BONUS_TEST_FILE)" ]; then \
-		echo "$(ORANGE)$(PREFIX)$(RESET) Do you want to include Bonus Test Cases? (y/n)"; \
-		read answer; \
-		if [ "$$answer" = "y" ] || [ "$$answer" = "Y" ]; then \
-			cat $(BONUS_TEST_FILE) >> $(TEMP_TEST_FILE); \
-			echo "$(ORANGE)$(PREFIX)$(RESET) Bonus test cases $(GREEN)added$(RESET)."; \
-		else \
-			echo "$(ORANGE)$(PREFIX)$(RESET) Running without Bonus test cases."; \
-		fi; \
-	fi
 
 	@sleep 0.5
 	@echo "$(ORANGE)$(PREFIX)$(RESET) Running tests from $(ORANGE)$(TEMP_TEST_FILE)$(RESET)..."
